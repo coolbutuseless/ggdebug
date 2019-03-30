@@ -1,7 +1,7 @@
 Package: ggdebug
 Type: Package
 Title: Debug Ggplot Stats
-Version: 0.1.0
+Version: 0.1.1
 Author: mikefc
 Maintainer: mikefc <mikefc@coolbutuseless.com>
 Description: Debug ggplot stats.

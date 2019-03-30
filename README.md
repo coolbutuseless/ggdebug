@@ -6,6 +6,8 @@
 <!-- badges: start -->
 
 ![](https://img.shields.io/badge/lifecycle-alpha-orange.svg)
+![](https://img.shields.io/badge/version-0.1.1-blue.svg)
+![](https://img.shields.io/badge/status-mostly%20harmless-yellow.svg)
 <!-- badges: end -->
 
 `ggdebug` is a package for debugging ggplot2 stats.
@@ -15,6 +17,9 @@ trying to decipher and understand how existing ones work.
 
 What’s in the box:
 
+  - `get_geom()` - New in version 0.1.1 (with help from [Brodie
+    Gaslam’s](https://twitter.com/BrodieGaslam))
+      - **Get the name of the Geom from within a Stat**
   - `create_stat_with_caching()`
       - **Capture arguments and the return values internal to Stat
         methods**
@@ -41,6 +46,70 @@ You can install the development version from
 # install.packages("remotes")
 remotes::install_github("coolbutuseless/ggdebug")
 ```
+
+## Determine the Geom from within a Stat
+
+For good reasons(?) within the Grammar of Graphics, the Stat and the
+Geom should work independently.
+
+For other reasons, I sometimes want to do weird things within a Stat
+depending on which Geom it is being used with.
+
+Finding the name of the Geom is not obvious, so I’ve included
+`get_geom()` which interrogates the frame stack to find the Layer which
+contains the Stat, and finds the name of the Geom contained within that
+Layer.
+
+*If anyone knows of a better way of doing this, please get in
+touch\!*
+
+``` r
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Create a Stat to test with
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stat_oath_breaker <- function(mapping = NULL, data = NULL,
+                              geom     = "point",
+                              position = "identity",
+                              ...,
+                              show.legend = NA,
+                              inherit.aes = TRUE) {
+  layer(
+    data        = data,
+    mapping     = mapping,
+    stat        = StatOathBreaker,
+    geom        = geom,
+    position    = position,
+    show.legend = show.legend,
+    inherit.aes = inherit.aes,
+    params = list(
+      na.rm = FALSE,
+      ...
+    )
+  )
+}
+
+StatOathBreaker <- ggproto(
+  "StatOathBreaker", Stat,
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Call `get_geom()` from within the Stat
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  setup_params = function(data, params) {
+    message("StatOathBreaker being used with: ", ggdebug::get_geom())
+    params
+  },
+  
+  compute_layer = function(data, scales, params) {
+    data
+  }
+)
+
+
+ggplot(mtcars) +
+  geom_line(aes(mpg, wt), stat = 'oath_breaker')
+```
+
+    #> StatOathBreaker being used with: GeomLine
 
 ## Debug `geom_histogram` + `StatBin`
 
@@ -183,7 +252,7 @@ ggplot(mtcars) +
   labs(title = "Use injected data to highlight the maximum bar within each group")
 ```
 
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
 
 ## Inject tetris pieces into `geom_histogram` + `StatBin`
 
@@ -235,7 +304,7 @@ ggplot(mtcars) +
   geom_histogram(aes(mpg, fill = as.factor(cyl)), stat = StatBinInject, bins = 5) +
   theme_bw() +
   facet_wrap(~cyl) +
-  labs(title = "Use injected data to inject tetris pieces")
+  labs(title = "Use injected data to create tetris pieces")
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />

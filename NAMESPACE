@@ -3,6 +3,7 @@
 export(add_data_to_cache)
 export(create_stat_with_caching)
 export(get_data_cache)
+export(get_geom)
 export(inject_data_into_stat_function)
 export(reset_data_cache)
 export(vprint)
